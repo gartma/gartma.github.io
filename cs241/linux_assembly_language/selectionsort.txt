@@ -1,0 +1,60 @@
+.section .data
+
+name:
+   .ascii "Gartner\n\0"
+
+totallength:
+   .long 8
+
+length:
+   .long 6
+
+.section .text
+
+.globl _start
+
+_start:
+
+movl $4, %eax
+movl $1, %ebx
+movl $name, %ecx
+movl totallength, %edx
+int $0x080
+
+movl length, %esi
+incl %esi
+
+loopbegin:
+
+decl %esi
+movl %esi, %edi
+decl %edi
+
+cmpl $0, %esi
+je loopend
+
+   forloop:
+   movb name(,%esi,1), %cl
+   movb name(,%edi,1), %ch
+   cmpb %cl, %ch
+   jl dec
+
+   movb %ch, name(,%esi,1)
+   movb %cl, name(,%edi,1)
+
+   dec:
+      cmpl $0, %edi
+      je loopbegin
+      decl %edi
+      jmp forloop
+
+loopend:
+movl $4, %eax
+movl $1, %ebx
+movl $name, %ecx
+movl totallength, %edx
+int $0x080
+
+movl $1, %eax
+movl $0, %ebx
+int $0x080

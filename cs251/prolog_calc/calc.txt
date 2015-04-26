@@ -1,0 +1,24 @@
+
+expr(add(N,M)) --> [+], expr(N), expr(M).
+expr(sub(N,M)) --> [-], expr(N), expr(M).
+expr(mul(N,M)) --> [*], expr(N), expr(M).
+expr(dvi(N,M)) --> [/], expr(N), expr(M).
+expr(store(U)) --> [s], expr(U).
+expr(num(T)) --> [num(T)].
+expr(recall) --> [r].
+
+
+preprocess([],[]).
+preprocess([H|T],[num(H)|TL]) :- number(H), preprocess(T,TL),!.
+preprocess([H|T],[H|TL]) :- preprocess(T,TL).
+
+calc :- readln(L,_,_,_,lowercase), preprocess(L,PreL), print(PreL), nl, expr(Tree,PreL,[]), print(Tree), nl, eval(Tree,0,_,Val), print(Val), nl.
+
+
+eval(add(L,R),Min,Mout,Val) :- eval(L,Min1,Mout1,Val1), Min = Min1, Val = X, eval(R,Min2,Mout2,Val2), Min2 = Mout1, Mout = Mout2, X is Val1 + Val2.
+eval(sub(L,R),Min,Mout,Val) :- eval(L,Min1,Mout1,Val1), Min = Min1, Val = X, eval(R,Min2,Mout2,Val2), Min2 = Mout1, Mout = Mout2, X is Val1 - Val2.
+eval(mul(L,R),Min,Mout,Val) :- eval(L,Min1,Mout1,Val1), Min = Min1, Val = X, eval(R,Min2,Mout2,Val2), Min2 = Mout1, Mout = Mout2, X is Val1 * Val2.
+eval(dvi(L,R),Min,Mout,Val) :- eval(L,Min1,Mout1,Val1), Min = Min1, Val = X, eval(R,Min2,Mout2,Val2), Min2 = Mout1, Mout = Mout2, X is Val1 / Val2.
+eval(store(U),Min,Mout,Val) :- eval(U,Min,_,Val1), Mout = Val1, Val = Val1.
+eval(recall,Min,Mout,Val) :- Val = Min, Mout = Min.
+eval(num(T),Min,Mout,Val) :- Mout = Min, Val = T.

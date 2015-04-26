@@ -1,0 +1,427 @@
+#!/usr/local/bin/ruby
+require 'stringio'
+require 'set'
+
+class Token
+  attr_reader :type, :line, :col
+  
+  def initialize(type,lineNum,colNum)
+    @type = type
+    @line = lineNum
+    @col = colNum
+  end
+end
+
+class LexicalToken < Token
+  attr_reader :lex
+  
+  def initialize(type,lex,lineNum,colNum)
+    super(type,lineNum,colNum)
+    
+    @lex = lex
+  end
+end
+
+class Scanner
+  def initialize(inStream)
+    @istream = inStream
+    @keywords = Set.new(["S","R","I"])
+    @lineCount = 1
+    @colCount = -1
+    @needToken = true
+    @lastToken = nil
+  end
+  
+  def putBackToken()
+    @needToken = false
+  end
+  
+  def getToken()
+    if !@needToken
+      @needToken = true
+      return @lastToken
+    end
+    
+    state = 0
+    foundOne = false
+    c = @istream.getc()
+    
+    if @istream.eof() then
+      @lastToken = Token.new(:eof,@lineCount,@colCount)
+      return @lastToken
+    end
+    
+    while !foundOne
+      @colCount = @colCount + 1
+      case state
+      when 0
+        lex = ""
+        column = @colCount
+        line = @lineCount
+        if isLetter(c) then state=1
+        elsif isDigit(c) then state=2
+        elsif c == ?+ then state = 3
+        elsif c == ?- then state = 4
+        elsif c == ?* then state = 5
+        elsif c == ?/ then state = 6
+        elsif c == ?( then state = 7
+        elsif c == ?) then state = 8
+        elsif c == ?\n then 
+          @colCount = -1
+          @lineCount = @lineCount+1
+        elsif isWhiteSpace(c) then state = state #ignore whitespace
+        elsif @istream.eof() then
+          @foundOne = true
+          type = :eof
+        else
+          puts "Unrecognized Token found at line ",line," and column ",column,"\n"
+          raise "Unrecognized Token"
+        end
+      when 1
+        if isLetter(c) or isDigit(c) then state = 1
+        else
+          if @keywords.include?(lex) then
+            foundOne = true
+            type = :keyword
+          else
+            foundOne = true
+            type = :identifier
+          end
+        end
+      when 2
+        if isDigit(c) then state = 2
+        else
+          type = :number
+          foundOne = true
+        end
+      when 3
+        type = :add
+        foundOne = true
+      when 4
+        type = :sub
+        foundOne = true
+      when 5
+        type = :times
+        foundOne = true
+      when 6
+        type = :divide
+        foundOne = true
+      when 7
+        type = :lparen
+        foundOne = true
+      when 8
+        type = :rparen
+        foundOne = true
+      end
+      
+      if !foundOne then
+        lex.concat(c)
+        c = @istream.getc()
+      end
+      
+    end
+    
+    @istream.ungetc(c)   
+    @colCount = @colCount - 1
+    if type == :number or type == :identifier or type == :keyword then
+      t = LexicalToken.new(type,lex,line,column)
+    else
+      t = Token.new(type,line,column)
+    end
+    
+    @lastToken = t
+    return t 
+  end
+  
+  private
+  def isLetter(c) 
+    return ((?a <= c and c <= ?z) or (?A <= c and c <= ?Z))
+  end
+  
+  def isDigit(c)
+    return (?0 <= c and c <= ?9)
+  end
+  
+  def isWhiteSpace(c)
+    return (c == ?\  or c == ?\n or c == ?\t)
+  end
+end
+
+class BinaryNode
+  attr_reader :left, :right
+  
+  def initialize(left,right)
+    @left = left
+    @right = right
+  end
+end
+
+class UnaryNode
+  attr_reader :subTree
+  
+  def initialize(subTree)
+    @subTree = subTree
+  end
+end
+
+class AddNode < BinaryNode
+  def initialize(left, right)
+    super(left,right)
+  end
+  
+  def evaluate() 
+    @left.evaluate()
+    @right.evaluate()
+    $calc.out.write("A := M[sp + 0]\n")
+    $calc.out.write("sp := sp - one\n")
+    $calc.out.write("B := M[sp + 0]\n")
+    $calc.out.write("A := A + B\n")
+    $calc.out.write("M[sp + 0] := A\n")  
+  end
+end
+
+class SubNode < BinaryNode
+  def initialize(left, right)
+    super(left,right)
+  end
+  
+  def evaluate() 
+    @left.evaluate()
+    @right.evaluate()
+    $calc.out.write("A := M[sp + 0]\n")
+    $calc.out.write("sp := sp - one\n")
+    $calc.out.write("B := M[sp + 0]\n")
+    $calc.out.write("A := B - A\n")
+    $calc.out.write("M[sp + 0] := A\n")
+  end
+end
+
+class NumNode 
+  def initialize(num)
+    @num = num
+  end
+  
+  def evaluate()
+    $calc.out.write("A := ")
+    $calc.out.write(@num)
+    $calc.out.write("\n")
+    $calc.out.write("sp := sp + one\n")
+    $calc.out.write("M[sp + 0] := A\n")
+  end
+end
+
+class MulNode < BinaryNode
+  def initalize(left, right)
+    super(left, right)
+  end
+
+  def evaluate()
+    @left.evaluate()
+    @right.evaluate()
+    $calc.out.write("A := M[sp + 0]\n")
+    $calc.out.write("sp := sp - one\n")
+    $calc.out.write("B := M[sp + 0]\n")
+    $calc.out.write("A := A * B\n")
+    $calc.out.write("M[sp + 0] := A\n")
+  end
+end
+
+class DivNode < BinaryNode
+  def initalize(left, right)
+    super(left, right)
+  end
+
+  def evaluate()
+    @left.evaluate()
+    @right.evaluate()
+    $calc.out.write("A := M[sp + 0]\n")
+    $calc.out.write("sp := sp - one\n")
+    $calc.out.write("B := M[sp + 0]\n")
+    $calc.out.write("A := B / A\n")
+    $calc.out.write("M[sp + 0] := A\n")
+  end
+end
+
+class StoreNode < UnaryNode
+  def initalize(sub)
+    super(sub)
+  end
+
+  def evaluate()
+    @subTree.evaluate()
+    $calc.out.write("memory := M[sp + 0]\n")
+  end
+end
+
+class RecallNode
+  def initalize()
+  end
+
+  def evaluate()
+    $calc.out.write("sp := sp + one\n")
+    $calc.out.write("M[sp + 0] := memory\n")
+  end
+end
+
+class InputNode
+  def initalize()
+  end
+
+  def evaluate()
+    $calc.out.write("writeStr(prompt)\n")
+    $calc.out.write("readInt(C)\n")
+    $calc.out.write("sp := sp + one\n")
+    $calc.out.write("M[sp + 0] := C\n")
+  end
+end
+
+class Parser
+  def initialize(istream)
+    @scan = Scanner.new(istream)
+  end
+  
+  def parse()
+    return Prog()
+  end
+  
+  private
+  def Prog()
+    result = Expr()
+    t = @scan.getToken()
+    
+    if t.type != :eof then
+      print "Expected EOF. Found ", t.type, ".\n"
+      raise "Parse Error"
+    end
+    
+    return result
+  end
+  
+  def Expr()
+    return RestExpr(Term())
+  end
+  
+  def RestExpr(e) 
+    t = @scan.getToken()
+    
+    if t.type == :add then
+      return RestExpr(AddNode.new(e,Term()))
+    end
+    
+    if t.type == :sub then
+      return RestExpr(SubNode.new(e,Term()))
+    end
+    
+    @scan.putBackToken()
+    
+    return e
+  end
+  
+  def Term()
+    return RestTerm(Storable())
+  end
+  
+  def RestTerm(e)
+    t = @scan.getToken()
+
+    if t.type == :times then
+      return RestTerm(MulNode.new(e, Storable()))
+    end
+
+    if t.type == :divide then
+      return RestTerm(DivNode.new(e, Storable()))
+    end
+
+    @scan.putBackToken()
+
+    return e
+  end
+  
+  def Storable()
+    result = Factor()
+    t = @scan.getToken()
+
+    if t.type == :keyword then
+      if t.lex == "S" then
+        return StoreNode.new(result)
+      end
+    end
+
+    @scan.putBackToken()
+
+    return result
+  end
+  
+  def Factor()
+    t = @scan.getToken()
+
+    if t.type == :number then
+      val = t.lex.to_i
+      return NumNode.new(val)
+    end
+
+    if t.lex == "R" then
+      return RecallNode.new()
+    end
+
+    if t.lex == "I" then
+      return InputNode.new()
+    end
+
+    if t.type == :lparen then
+      result = Expr()
+
+      t = @scan.getToken()
+
+      if t.type == :rparen then
+        return result
+      end
+
+      raise "Parse Error"
+    end
+
+    raise "Parse Error"
+  end         
+end
+
+class Calculator
+  attr_reader :out
+  
+  def initialize(outStream)
+    @out = outStream
+  end
+  
+  def eval(expr)
+    parser = Parser.new(StringIO.new(expr))
+    
+    ast = parser.parse()
+    @out.write("# This is set up code for the program.\n")
+    @out.write("zero := 0\n")
+    @out.write("one := 1\n")
+    @out.write("memory := 0\n")
+    @out.write("sp := 99\n")
+    @out.write("prompt := \"Please enter an integer\"\n")   
+    ast.evaluate()
+    @out.write("s := \"The result is \"\n")
+    @out.write("writeStr(s)\n")
+    @out.write("writeInt(M[100])\n")
+    @out.write("halt\n")
+    @out.write("equ zero M[0] equ one M[1] \n")
+    @out.write("equ memory M[2] equ sp M[3]\n")
+    @out.write("equ A M[4] equ B M[5] equ C M[6]\n")
+    @out.write("equ s M[10] equ prompt M[30]\n") 
+  end
+end
+
+puts "Please enter a calculator expression:"
+
+expr = gets
+
+file = File.open("a.ewe","w")
+
+$calc = Calculator.new(file)
+
+$calc.eval(expr)
+
+file.close()
+

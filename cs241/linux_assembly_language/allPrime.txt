@@ -1,0 +1,92 @@
+.section .data
+
+inputstr:
+  .ascii "Please enter an upper bound \0"
+
+formatstr:
+  .ascii "%d\0"
+
+output:
+  .ascii "%d\n\0"
+
+bound:
+  .long 0
+
+primenum:
+  .long 0
+
+.section .text
+
+.globl _start
+
+_start:
+
+pushl $inputstr
+call printf
+addl $4, %esp
+
+pushl $bound
+pushl $formatstr
+call scanf
+addl $8, %esp
+
+movl $2, primenum
+movl bound, %ebx
+
+cmpl %ebx, primenum
+jg done
+
+whileloop:
+pushl primenum
+call prime
+addl $4, %esp
+movl bound, %ebx
+cmpl primenum, %ebx
+je done
+movl primenum, %ecx
+incl %ecx
+movl %ecx, primenum
+jmp whileloop
+
+done:
+
+movl %eax, %ebx
+movl $1, %eax
+int $0x080
+
+prime:
+
+pushl %ebp
+movl %esp, %ebp
+
+movl 8(%ebp), %ebx
+movl $2, %esi
+
+beginloop:
+
+cmpl %esi, %ebx
+je isPrime
+movl %ebx, %eax
+cdq
+idivl %esi
+cmpl $0, %edx
+je notPrime
+incl %esi
+jmp beginloop
+
+isPrime:
+
+pushl %ebx
+pushl $output
+call printf
+addl $8, %esp
+movl %ebp, %esp
+popl %ebp
+ret
+
+notPrime:
+
+movl $0, %eax
+movl %ebp, %esp
+popl %ebp
+ret

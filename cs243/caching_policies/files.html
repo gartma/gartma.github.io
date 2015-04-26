@@ -1,0 +1,9 @@
+<h5>Caching Policies</h5>
+<p>While modern operating systems support virtual memory, the operating system doesn't know enough about the data to make good decisions on writing or replaces pages to or from disk memory. Since writing and reading from disk memory is significantly slower, the purpose of this assignment was to implement and test different page replacement stratgies for a database. The assignment was to implement two different page replacement strategies and compare them to the naive page replacement strategy. As an in-class assignment, we had already added the ability to count the number of blocks read and written, and that was used as our way of judging the effectivness of a page replacement strategy. The two strategies I implemented were Clock, and Not Recently Used strategies. To test this, a transaction was created and commited. The files presented here are the ones I modified and are part of a larger complete database system created by Edward Sciore. Throughout the class, we examined parts of this database and made modifications to improve its performance. The text we used was by Edward Sciore so the text accompanied Sciore's database. The Not Recently Used implementation uses functions from the Buffer class, the Clock implementation does not rely on any other files.</p>
+<table>
+    <tr>
+        <td><a href="http://gartma.github.io/cs243/caching_policies/BasicBufferMgr(Clock).txt" target="_blank">BasicBufferMgr(Clock).java</a></td>
+        <td><a href="http://gartma.github.io/cs243/caching_policies/BasicBufferMgr(NRU).txt" target="_blank">BasicBufferMgr(NRU).java</a></td>
+        <td><a href="http://gartma.github.io/cs243/caching_policies/Buffer.txt" target="_blank">Buffer.java</a></td>
+    </tr>
+</table>

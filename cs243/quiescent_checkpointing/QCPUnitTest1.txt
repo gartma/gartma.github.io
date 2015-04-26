@@ -1,0 +1,35 @@
+package simpledb.tx;
+
+import simpledb.server.SimpleDB;
+
+public class QCPUnitTest1 {
+	
+	
+	public static void main(String[] args) {
+		SimpleDB.init("simpledb");
+		
+		for (int i = 1; i < 15; i++){
+			new Thread(new FifteenTrans(i)).start();
+		}
+		
+	}
+}
+
+class FifteenTrans implements Runnable {
+	int txNum;
+	
+	FifteenTrans(int num) {
+		txNum = num;
+	}
+	
+	public void run() {
+		try {
+			Transaction tx = new Transaction();
+			Thread.sleep(5000);
+			tx.commit();
+		}
+		catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+}

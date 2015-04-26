@@ -1,0 +1,173 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+package databasebrowser;
+
+import java.sql.Connection;
+import java.sql.Statement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.ResultSetMetaData;
+import java.awt.BorderLayout;
+import java.util.ArrayList;
+import javax.swing.JFrame;
+import javax.swing.JTable;
+import javax.swing.JScrollPane;
+import javax.swing.JOptionPane;
+import javax.swing.table.AbstractTableModel;
+
+/**
+ *
+ * @author mackenziegartner
+ */
+public class BrowserFrame extends JFrame {
+
+    final static int MAX_ROWS = 35;
+
+    private QueryPanel qpanel;
+    private PagePanel ppanel;
+    private ArrayList<ArrayList<Object>> databaseList = new ArrayList();
+    private ArrayList<String> columnNames = new ArrayList<String>();
+    private JTable table;
+    private Connection conn;
+    private Statement stmt;
+    private ResultSet rs;
+    private String currentQuery;
+    private int tablePage = 0;
+
+    public BrowserFrame(Connection aConn)
+    {
+        super();
+
+        this.setSize(900, 680);
+        this.setTitle("Database Browser");
+        this.setLayout(new BorderLayout());
+
+        conn = aConn;
+
+        qpanel = new QueryPanel(this);
+        this.add(qpanel, BorderLayout.NORTH);
+
+        ppanel = new PagePanel(this);
+        this.add(ppanel, BorderLayout.SOUTH);
+        
+        table = new JTable();
+        table.setAutoCreateRowSorter(true);
+        this.add(table, BorderLayout.CENTER);
+        this.add(new JScrollPane(table));
+    }
+
+    public void setDatabaseList(ArrayList<ArrayList<Object>> aList) {
+        databaseList = aList;
+    }
+
+    public void setTablePage(int pageNum) {
+        tablePage = pageNum;
+    }
+
+    public int getTablePage() {
+        return tablePage;
+    }
+
+    public String getCurrentQuery() {
+        return currentQuery;
+    }
+
+    public ResultSet getRS() {
+        return rs;
+    }
+
+    public ArrayList<String> getColumnNames() {
+        return columnNames;
+    }
+    
+    public void updateGuiTable(String query) {
+        try {
+            stmt = conn.createStatement();
+            currentQuery = query;
+            rs = stmt.executeQuery(query);
+            ResultSetMetaData rsmd = rs.getMetaData();
+            int columns = rsmd.getColumnCount();
+            ArrayList<ArrayList<Object>> rows = new ArrayList();
+            if (tablePage == 0) {
+                rs.beforeFirst();
+            }
+            else {
+                rs.absolute(tablePage * MAX_ROWS);
+            }
+
+            while (rs.next() && (rows.size() < MAX_ROWS)) {
+                ArrayList<Object> row = new ArrayList<Object>();
+                for(int i = 1; i <= columns; i++) {
+                    row.add(rs.getObject(i));
+                }
+                rows.add(row);
+            }
+
+            for (int i = 1; i <= columns; i++) {
+                columnNames.add(rsmd.getColumnName(i));
+            }
+
+            databaseList = rows;
+
+            DatabaseTableModel databaseTable =
+                    new DatabaseTableModel(databaseList);
+            table.setModel(databaseTable);
+        }
+        catch (SQLException e) {
+            String[] s = e.getMessage().split("\\s");
+            String newString = "";
+            int i = 0;
+            for (String word : s) {
+                if (i == 5) {
+                    newString = newString + "\n" + word + " ";
+                    i = 0;
+                }
+                else {
+                    newString = newString + word + " ";
+                    i++;
+                }
+            }
+            databaseList = null;
+            DatabaseTableModel databaseTable =
+                    new DatabaseTableModel(databaseList);
+            table.setModel(databaseTable);
+            JOptionPane.showMessageDialog
+                    (this, newString, "Query Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private class DatabaseTableModel extends AbstractTableModel {
+
+        private ArrayList<ArrayList<Object>> databaseList;
+
+        public DatabaseTableModel(ArrayList<ArrayList<Object>> aList) {
+            super();
+            databaseList = aList;
+        }
+
+        public Object getValueAt (int row, int col) {
+            if (databaseList != null)
+                return databaseList.get(row).get(col);
+            return null;
+        }
+
+        public int getColumnCount() {
+            if (databaseList != null)
+                return databaseList.get(0).size();
+            return 0;
+        }
+
+        public int getRowCount() {
+            if (databaseList != null)
+                return databaseList.size();
+            return 0;
+        }
+
+        public String getColumnName(int col) {
+            return columnNames.get(col);
+        }
+    }
+}

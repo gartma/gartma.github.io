@@ -1,0 +1,24 @@
+structure calcAS = 
+struct
+
+datatype
+    AST = add' of AST * AST
+        | sub' of AST * AST
+        | prod' of AST * AST
+        | div' of AST * AST
+        | negate' of AST
+        | integer' of int
+        | store' of AST
+        | recall'
+        | get'
+        | valref' of string
+        | letval' of string * AST * AST
+        | if' of AST * string * AST * AST * AST
+(*
+        | letfun' of string * string * AST * AST
+        | funcall' of string * AST;
+*)
+	   
+end;
+
+

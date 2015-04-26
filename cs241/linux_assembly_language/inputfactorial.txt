@@ -1,0 +1,76 @@
+.section .data
+
+inputstr:
+  .ascii "Please enter an number \0"
+
+formatstr:
+  .ascii "%d\0"
+
+output:
+  .ascii "%d\n\0"
+
+number:
+  .long 0
+
+test:
+  .ascii "print test \n\0"
+
+.section .text
+
+.globl _start
+
+_start:
+
+#pushl $test
+#call printf
+#addl $4, %esp
+
+pushl $inputstr
+call printf
+addl $4, %esp
+
+pushl $number
+pushl $formatstr
+call scanf
+addl $8, %esp
+
+pushl number
+call factorial
+addl $4, %esp
+
+pushl %eax
+pushl $output
+call printf
+addl $8, %esp
+
+movl $1, %eax
+int $0x080
+
+factorial:
+
+pushl %ebp
+movl %esp, %ebp
+
+movl 8(%ebp), %ecx
+
+cmpl $1, %ecx
+je basecase
+
+decl %ecx
+
+pushl %ecx
+call factorial
+addl $4, %esp
+
+incl %ecx
+imull %ecx
+movl %ebp, %esp
+popl %ebp
+ret
+
+basecase:
+
+movl $1, %eax
+movl %ebp, %esp
+popl %ebp
+ret

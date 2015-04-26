@@ -1,0 +1,842 @@
+'''
+  File: btree.shell   -- save as btree.py
+  Author: Max Gartner
+  Date: 
+  Description: 
+'''
+
+
+from btreenode import BTreeNode
+from stack import Stack
+from queue import Queue
+from person import Person
+from copy import deepcopy
+import sys
+
+class BTree:
+    '''  Comment about the class BTree!!
+    '''
+    def __init__(self, degree):
+        # This method is complete.
+        self.degree = degree
+        self.rootNode = BTreeNode(degree)
+        
+        # If time, file creation code, etc.
+        self.nodes = {}
+        self.stackOfNodes = Stack()
+        self.rootNode.setIndex(1)
+        self.writeAt(1, self.rootNode)
+        self.rootIndex = 1
+        self.freeIndex = 2
+
+    def __str__(self):
+        # This method is complete.
+        st = '  The degree of the BTree is ' + str(self.degree)+\
+             '.\n'
+        st += '  The index of the root node is ' + \
+              str(self.rootIndex) + '.\n'
+        for x in range(1, self.freeIndex):
+            node = self.readFrom(x)
+            if node != None and node.getNumberOfKeys() > 0:
+                st += str(node) 
+        return st
+
+    def delete(self, anItem):
+        ''' Answer None if a matching item is not found.  If found,
+          answer the entire item.  
+        '''
+        search = self.searchTree(anItem)
+        if not search['found']:
+            self.stackOfNodes.clear()
+            return None
+        else:
+            current = self.readFrom(search['fileIndex'])
+            rightChild = current.child[search['nodeIndex'] + 1]
+            if rightChild != None:
+                removedItem = current.items[search['nodeIndex']]
+                self.replace(current, anItem, search['nodeIndex'], rightChild)
+                self.stackOfNodes.clear()
+                return removedItem
+            else:
+                if current.getIndex() == self.rootIndex:
+                    self.stackOfNodes.clear()
+                    removedItem = current.removeItem(search['nodeIndex'])
+                    self.writeAt(current.getIndex(), current)
+                    return removedItem
+                else:
+                    if current.getNumberOfKeys() == self.degree:
+                        removedItem = current.removeItem(search['nodeIndex'])
+                        self.mergeOrRedistribute(current)
+                        self.stackOfNodes.clear()
+                        return removedItem
+                    else:
+                        self.stackOfNodes.clear()
+                        removedItem = current.removeItem(search['nodeIndex'])
+                        self.writeAt(current.getIndex(), current)
+                        return removedItem
+
+    def mergeOrRedistribute(self, current):
+        ''' The current node is a leaf node that has a number of items
+        equal to the degree. Since removing an item from the current node
+        would break a BTree property, the item must either be replaced with
+        an item from a sibling, or, if the sibling is incapable of
+        redistrubing an item, the current node must be merged with the
+        designated sibling and the parentItem whose children are the indices
+        of the current node and the designated sibling.
+        '''
+        parent = self.readFrom(self.stackOfNodes.pop())
+        index = 0
+        sibling = parent.child[index]
+        designatedLeft = False
+        while sibling != current.getIndex():
+            index += 1
+            sibling = parent.child[index]
+        if index == (self.degree * 2):
+            parentItemIndex = index - 1
+            designatedLeft = True
+            designatedSibling = self.readFrom(parent.child[(self.degree * 2) - 1])
+        else:
+            index += 1
+            if parent.child[index] == None:
+                index -= 2
+                parentItemIndex = index
+                designatedLeft = True
+                designatedSibling = self.readFrom(parent.child[index])
+            else:
+                designatedSibling = self.readFrom(parent.child[index])
+                parentItemIndex = index - 1
+        if designatedSibling.getNumberOfKeys() == self.degree:
+            if designatedLeft:
+                tempNode = designatedSibling.copyWithRight(current, parent)
+                tempLeftChild = designatedSibling.child[self.degree]
+                tempRightChild = current.child[0]
+            else:
+                tempNode = current.copyWithRight(designatedSibling, parent)
+                tempLeftChild = current.child[self.degree - 1]
+                tempRightChild = designatedSibling.child[0]
+            current.copyItemsAndChildren(tempNode, 0, (self.degree * 2), 0)
+            if designatedLeft:
+                current.child[self.degree] = tempLeftChild
+                current.child[self.degree + 1] = tempRightChild
+            else:
+                current.child[self.degree - 1] = tempLeftChild
+                current.child[self.degree] = tempRightChild
+            current.setNumberOfKeys(self.degree * 2)
+            parent.removeItem(parentItemIndex)
+            parent.removeChild(parentItemIndex + 1)
+            parent.child[parentItemIndex] = current.getIndex()
+            self.writeAt(current.getIndex(), current)
+            self.writeAt(parent.getIndex(), parent)
+            self.nodes.pop(designatedSibling.getIndex())
+            if parent.getNumberOfKeys() < self.degree and parent.getIndex() != self.rootIndex:
+                self.mergeOrRedistribute(parent)
+            else:
+                if parent.getNumberOfKeys() == 0 and parent.getIndex() == self.rootIndex:
+                    self.rootNode = current
+                    self.rootIndex = current.getIndex()
+                    self.nodes.pop(parent.getIndex())
+        else:
+            if designatedLeft:
+                tempNode = designatedSibling.copyWithRight(current, parent)
+                index = 0
+                while index != (tempNode.getNumberOfKeys() + 1) // 2:
+                    designatedSibling.items[index] = tempNode.items[index]
+                    index += 1
+                parent.items[parentItemIndex] = tempNode.items[index]
+                index += 1
+                while index <= tempNode.getNumberOfKeys():
+                    current.items[index] = tempNode.items[index]
+                    index += 1
+            else:
+                tempNode = current.copyWithRight(designatedSibling, parent)
+                index = 0
+                current.setNumberOfKeys(0)
+                while index != (tempNode.getNumberOfKeys()) // 2:
+                    current.items[index] = tempNode.items[index]
+                    index += 1
+                    current.setNumberOfKeys(index)
+                parent.items[parentItemIndex] = tempNode.items[index]
+                index += 1
+                dsIndex = 0
+                designatedSibling.removeItem(dsIndex)
+                while index <= tempNode.getNumberOfKeys():
+                    designatedSibling.items[dsIndex] = tempNode.items[index]
+                    index += 1
+                    dsIndex += 1
+            self.writeAt(current.getIndex(), current)
+            self.writeAt(parent.getIndex(), parent)
+            self.writeAt(designatedSibling.getIndex(), designatedSibling)
+            
+    def replace(self, current, anItem, nodeIndex, rightChild):
+        ''' The current node is not a leaf node. In order to maintain a
+        BTree property the current node item that was deleted must be replaced
+        with the smallest item in the right subtree (rightChild). The rightChild
+        must also ensure that after losing an item it still maintains a BTree
+        property.
+        '''
+        self.stackOfNodes.push(current.getIndex())
+        subTree = self.readFrom(rightChild)
+        self.stackOfNodes.push(rightChild)
+        leftChild = subTree.child[0]
+        while leftChild != None:
+            self.stackOfNodes.push(leftChild)
+            subTree = self.readFrom(leftChild)
+            leftChild = subTree.child[0]
+        self.stackOfNodes.pop()
+        substitute = subTree.removeItem(0)
+        removedItem = current.items[nodeIndex]
+        current.items[nodeIndex] = substitute
+        self.writeAt(current.getIndex(), current)
+        if subTree.getNumberOfKeys() < self.degree:
+            self.mergeOrRedistribute(subTree)
+        
+    def inorderOn(self, aFile):
+        '''
+          Print the items of the BTree in inorder on the file 
+          aFile.  aFile is open for writing.
+          This method is complete at this time.
+        '''
+        aFile.write("An inorder traversal of the BTree:\n")
+        self.inorderOnFrom( aFile, self.rootIndex)
+
+    def inorderOnFrom(self, aFile, index):
+        ''' Print the items of the subtree of the BTree, which is
+          rooted at index, in inorder on aFile.
+        '''
+        current = self.readFrom(index)
+        index = 0
+        if current.child[index] != None:
+            self.inorderOnFrom(aFile, current.child[index])
+        for item in current.items:
+            if item != None:
+                aFile.write('' + str(item) + '\n')
+            if current.child[index + 1] != None:
+                self.inorderOnFrom(aFile, current.child[index + 1])
+            index += 1
+
+    def insert(self, anItem):
+        ''' Answer None if the BTree already contains a matching
+          item. If not, insert a deep copy of anItem and answer
+          anItem.
+        '''
+        search = self.searchTree(anItem)
+        if search['found']:
+            self.stackOfNodes.clear()
+            return None
+        else:
+            newItem = deepcopy(anItem)
+            current = self.readFrom(search['fileIndex'])
+            if current.isFull():
+                self.split(current, newItem, None, None)
+            else:
+                current.insertItem(newItem, None, None)
+                self.writeAt(current.getIndex(), current)
+        self.stackOfNodes.clear()
+        return anItem
+    
+    def split(self, current, anItem, left, right):
+        ''' Splitting the current node into two nodes, the newNode
+        will have the next available index and will be inserted into
+        the dictionary of nodes.
+        '''
+        newNode = current.addItemAndSplit(anItem, left, right)
+        newNode.setIndex(self.freeIndex)
+        self.freeIndex += 1
+        self.writeAt(newNode.getIndex(), newNode)
+        tempItem = current.removeItem(self.degree)
+        tempChild = current.removeChild(self.degree + 1)
+        parent = self.readFrom(self.stackOfNodes.pop())
+        if parent != None:
+            if parent.isFull():
+                self.split(parent, tempItem, current.getIndex(), newNode.getIndex())
+            else:
+                parent.insertItem(tempItem, current.getIndex(), newNode.getIndex())
+        else:
+            parentNode = BTreeNode(self.degree)
+            parentNode.setIndex(self.freeIndex)
+            self.freeIndex += 1
+            parentNode.insertItem(tempItem, current.getIndex(), newNode.getIndex())
+            self.writeAt(parentNode.getIndex(), parentNode)
+            self.rootNode = parentNode
+            self.rootIndex = parentNode.getIndex()
+        
+    def levelByLevel(self, aFile):
+        ''' Print the nodes of the BTree level-by-level on aFile.
+        '''
+        aFile.write("A level-by-level listing of the nodes:\n")
+        myQueue = Queue()
+        myQueue.enqueue(self.rootNode)
+        while not myQueue.isEmpty():
+            current = myQueue.dequeue()
+            for child in current.child:
+                if child != None:
+                    myQueue.enqueue(self.readFrom(child))
+            print(current)
+
+    def readFrom(self, index):
+        ''' Answer the node at entry index of the btree structure.
+          Later adapt to files.  This method is complete at this time.
+        '''
+        if self.nodes.__contains__(index):
+            return self.nodes[index]
+        else:
+            return None
+
+    def recycle(self, aNode):
+        # For now, do nothing
+        # This method is complete at this time.
+        aNode.clear()
+
+    def retrieve(self, anItem):
+        ''' If found, answer a deep copy of the matching item.
+          If not found, answer None
+        '''
+        search = self.searchTree(anItem)
+        if not search['found']:
+            self.stackOfNodes.clear()
+            return None
+        else:
+            node = self.readFrom(search['fileIndex'])
+            self.stackOfNodes.clear()
+            return deepcopy(node.items[search['nodeIndex']])
+
+    def searchTree(self, anItem):
+        ''' Answer a dictionary.  If there is a matching item, at
+          'found' is True, at 'fileIndex' is the index of the node
+          in the BTree with the matching item, and at 'nodeIndex'
+          is the index into the node of the matching item.  If not,
+          at 'found' is False, but the entry for 'fileIndex' is the
+          leaf node where the search terminated.  An important
+          function of this method is that it pushes all of the
+          nodes of the search path from the rootnode, down to,
+          but not including the corresponding leaf node of a search
+          (or the node containing a match).  Again, the rootnode
+          is pushed if it is not a leaf node and has no match.
+        '''
+        currentNode = self.rootNode
+        search = {'fileIndex': currentNode.getIndex(), 'nodeIndex': 0, 'found': False}
+        nextIndex = self.rootIndex
+        while nextIndex != None:
+            search['fileIndex'] = nextIndex
+            nodeSearch = currentNode.searchNode(anItem)
+            search['nodeIndex'] = nodeSearch['nodeIndex']
+            if nodeSearch['found']:
+                search['found'] = True
+                return search
+            self.stackOfNodes.push(nextIndex)
+            nextIndex = currentNode.child[nodeSearch['nodeIndex']]
+            currentNode = self.readFrom(nextIndex)
+        self.stackOfNodes.pop()
+        return search
+            
+
+    def update(self, anItem):
+        ''' If found, update the item with a matching key to be a
+          deep copy of anItem and answer anItem.  If not, answer None.
+        '''
+        search = self.searchTree(anItem)
+        if not search['found']:
+            self.stackOfNodes.clear()
+            return None
+        else:
+            newItem = deepcopy(anItem)
+            current = self.readFrom(search['fileIndex'])
+            current.items[search['nodeIndex']] = newItem
+            self.stackOfNodes.clear()
+        return anItem
+    
+
+    def writeAt(self, index, aNode):
+        ''' Set the element in the btree with the given index
+          to aNode.  This method must be invoked to make any
+          permanent changes to the btree.  We may later change
+          this method to work with files.
+          This method is complete at this time.
+        '''
+        self.nodes[index] = aNode
+
+def main():
+    print('My name is Max Gartner')
+
+    print( ' # run #1 -------------------------------' )
+    bt = BTree(1)
+    bt.insert(50)
+    bt.insert(27)
+    bt.insert(35)
+    print( bt )
+
+    bt.insert(98)
+    bt.insert(201)
+    print( bt )
+
+    bt.insert(73)
+    bt.insert(29)
+    bt.insert(150)
+    bt.insert(15)
+    print( bt )
+
+    bt.insert(64)
+    print( bt )
+
+    bt.insert(83)
+    bt.insert(90)
+    print( bt )
+
+    bt.insert(87)
+    bt.insert(253)
+    print( bt )
+
+    bt.insert(84)
+    print( bt )
+    
+    print( ' # run #2 -------------------------------' )
+    t = BTree(1)
+    t.insert(Person('Joe', 38))
+    t.insert(Person('Susie',48))
+    t.insert(Person('Billy',39))
+    t.insert(Person('Tomas',12))
+    t.insert(Person('Don',35))
+    t.update(Person('Willy', 12))
+    print( t.retrieve(Person('', 48)) )
+    print( t )
+
+    t.levelByLevel(sys.stdout)
+    t.inorderOn(sys.stdout)
+    t.delete(35)
+    t.inorderOn(sys.stdout)
+
+    print( ' # run#3 -------------------------------' )
+    bt = BTree(2)
+    bt.insert(20)
+    bt.insert(40)
+    bt.insert(10)
+    bt.insert(30)
+    bt.insert(15)
+    bt.insert(35)
+    bt.insert(7)
+    bt.insert(26)
+    bt.insert(18)
+    bt.insert(22)
+    bt.insert(5)
+    bt.insert(42)
+    bt.insert(13)
+    bt.insert(46)
+    bt.insert(27)
+    bt.insert(8)
+    bt.insert(32)
+    bt.insert(38)
+    bt.insert(24)
+    bt.insert(45)
+    bt.insert(25)
+    print( bt )
+    
+    
+    print( ' # run#4 -------------------------------' )
+    bt = BTree(2)
+    bt.insert(20)
+    bt.insert(40)
+    bt.insert(10)
+    bt.insert(30)
+    bt.insert(15)
+    bt.insert(35)
+    bt.insert(7)
+    bt.insert(26)
+    bt.insert(18)
+    bt.insert(22)
+    bt.insert(5)
+    bt.insert(42)
+    bt.insert(13)
+    bt.insert(46)
+    bt.insert(27)
+    bt.insert(8)
+    bt.insert(32)
+    bt.insert(38)
+    bt.insert(24)
+    bt.insert(45)
+    bt.insert(25)
+    bt.delete(35)
+    bt.delete(38)
+    bt.delete(25)
+    bt.delete(38)
+    print( bt )
+
+    print( ' #run #5 -------------------------------' )
+    bt = BTree(1)
+    bt.insert(27)
+    bt.insert(50)
+    bt.insert(35)
+    bt.insert(29)
+    bt.insert(150)
+    bt.insert(98)
+    bt.insert(73)
+    bt.insert(201)
+    print( bt )
+    bt.delete(35)
+    bt.delete(98)
+    bt.delete(29)
+    bt.delete(73)
+    bt.delete(50)
+    bt.delete(150)
+    bt.delete(12)
+    bt.delete(98)
+    print( bt )
+    
+
+
+if __name__ == '__main__': main()
+
+''' The output:
+ # run #1 -------------------------------
+  The degree of the BTree is 1.
+  The index of the root node is 3.
+The contents of the node with index 1:
+   Index   0  >  child: None   item: 27
+                 child: None
+The contents of the node with index 2:
+   Index   0  >  child: None   item: 50
+                 child: None
+The contents of the node with index 3:
+   Index   0  >  child: 1   item: 35
+                 child: 2
+
+  The degree of the BTree is 1.
+  The index of the root node is 3.
+The contents of the node with index 1:
+   Index   0  >  child: None   item: 27
+                 child: None
+The contents of the node with index 2:
+   Index   0  >  child: None   item: 50
+                 child: None
+The contents of the node with index 3:
+   Index   0  >  child: 1   item: 35
+   Index   1  >  child: 2   item: 98
+                 child: 4
+The contents of the node with index 4:
+   Index   0  >  child: None   item: 201
+                 child: None
+
+  The degree of the BTree is 1.
+  The index of the root node is 7.
+The contents of the node with index 1:
+   Index   0  >  child: None   item: 15
+                 child: None
+The contents of the node with index 2:
+   Index   0  >  child: None   item: 50
+   Index   1  >  child: None   item: 73
+                 child: None
+The contents of the node with index 3:
+   Index   0  >  child: 1   item: 27
+                 child: 5
+The contents of the node with index 4:
+   Index   0  >  child: None   item: 150
+   Index   1  >  child: None   item: 201
+                 child: None
+The contents of the node with index 5:
+   Index   0  >  child: None   item: 29
+                 child: None
+The contents of the node with index 6:
+   Index   0  >  child: 2   item: 98
+                 child: 4
+The contents of the node with index 7:
+   Index   0  >  child: 3   item: 35
+                 child: 6
+
+  The degree of the BTree is 1.
+  The index of the root node is 7.
+The contents of the node with index 1:
+   Index   0  >  child: None   item: 15
+                 child: None
+The contents of the node with index 2:
+   Index   0  >  child: None   item: 50
+                 child: None
+The contents of the node with index 3:
+   Index   0  >  child: 1   item: 27
+                 child: 5
+The contents of the node with index 4:
+   Index   0  >  child: None   item: 150
+   Index   1  >  child: None   item: 201
+                 child: None
+The contents of the node with index 5:
+   Index   0  >  child: None   item: 29
+                 child: None
+The contents of the node with index 6:
+   Index   0  >  child: 2   item: 64
+   Index   1  >  child: 8   item: 98
+                 child: 4
+The contents of the node with index 7:
+   Index   0  >  child: 3   item: 35
+                 child: 6
+The contents of the node with index 8:
+   Index   0  >  child: None   item: 73
+                 child: None
+
+  The degree of the BTree is 1.
+  The index of the root node is 7.
+The contents of the node with index 1:
+   Index   0  >  child: None   item: 15
+                 child: None
+The contents of the node with index 2:
+   Index   0  >  child: None   item: 50
+                 child: None
+The contents of the node with index 3:
+   Index   0  >  child: 1   item: 27
+                 child: 5
+The contents of the node with index 4:
+   Index   0  >  child: None   item: 150
+   Index   1  >  child: None   item: 201
+                 child: None
+The contents of the node with index 5:
+   Index   0  >  child: None   item: 29
+                 child: None
+The contents of the node with index 6:
+   Index   0  >  child: 2   item: 64
+                 child: 8
+The contents of the node with index 7:
+   Index   0  >  child: 3   item: 35
+   Index   1  >  child: 6   item: 83
+                 child: 10
+The contents of the node with index 8:
+   Index   0  >  child: None   item: 73
+                 child: None
+The contents of the node with index 9:
+   Index   0  >  child: None   item: 90
+                 child: None
+The contents of the node with index 10:
+   Index   0  >  child: 9   item: 98
+                 child: 4
+
+  The degree of the BTree is 1.
+  The index of the root node is 7.
+The contents of the node with index 1:
+   Index   0  >  child: None   item: 15
+                 child: None
+The contents of the node with index 2:
+   Index   0  >  child: None   item: 50
+                 child: None
+The contents of the node with index 3:
+   Index   0  >  child: 1   item: 27
+                 child: 5
+The contents of the node with index 4:
+   Index   0  >  child: None   item: 150
+                 child: None
+The contents of the node with index 5:
+   Index   0  >  child: None   item: 29
+                 child: None
+The contents of the node with index 6:
+   Index   0  >  child: 2   item: 64
+                 child: 8
+The contents of the node with index 7:
+   Index   0  >  child: 3   item: 35
+   Index   1  >  child: 6   item: 83
+                 child: 10
+The contents of the node with index 8:
+   Index   0  >  child: None   item: 73
+                 child: None
+The contents of the node with index 9:
+   Index   0  >  child: None   item: 87
+   Index   1  >  child: None   item: 90
+                 child: None
+The contents of the node with index 10:
+   Index   0  >  child: 9   item: 98
+   Index   1  >  child: 4   item: 201
+                 child: 11
+The contents of the node with index 11:
+   Index   0  >  child: None   item: 253
+                 child: None
+
+  The degree of the BTree is 1.
+  The index of the root node is 15.
+The contents of the node with index 1:
+   Index   0  >  child: None   item: 15
+                 child: None
+The contents of the node with index 2:
+   Index   0  >  child: None   item: 50
+                 child: None
+The contents of the node with index 3:
+   Index   0  >  child: 1   item: 27
+                 child: 5
+The contents of the node with index 4:
+   Index   0  >  child: None   item: 150
+                 child: None
+The contents of the node with index 5:
+   Index   0  >  child: None   item: 29
+                 child: None
+The contents of the node with index 6:
+   Index   0  >  child: 2   item: 64
+                 child: 8
+The contents of the node with index 7:
+   Index   0  >  child: 3   item: 35
+                 child: 6
+The contents of the node with index 8:
+   Index   0  >  child: None   item: 73
+                 child: None
+The contents of the node with index 9:
+   Index   0  >  child: None   item: 84
+                 child: None
+The contents of the node with index 10:
+   Index   0  >  child: 9   item: 87
+                 child: 12
+The contents of the node with index 11:
+   Index   0  >  child: None   item: 253
+                 child: None
+The contents of the node with index 12:
+   Index   0  >  child: None   item: 90
+                 child: None
+The contents of the node with index 13:
+   Index   0  >  child: 4   item: 201
+                 child: 11
+The contents of the node with index 14:
+   Index   0  >  child: 10   item: 98
+                 child: 13
+The contents of the node with index 15:
+   Index   0  >  child: 7   item: 83
+                 child: 14
+
+ # run #2 -------------------------------
+Name: Susie Id: 48 
+  The degree of the BTree is 1.
+  The index of the root node is 3.
+The contents of the node with index 1:
+   Index   0  >  child: None   item: Name: Willy Id: 12 
+                 child: None
+The contents of the node with index 2:
+   Index   0  >  child: None   item: Name: Susie Id: 48 
+                 child: None
+The contents of the node with index 3:
+   Index   0  >  child: 1   item: Name: Don Id: 35 
+   Index   1  >  child: 4   item: Name: Billy Id: 39 
+                 child: 2
+The contents of the node with index 4:
+   Index   0  >  child: None   item: Name: Joe Id: 38 
+                 child: None
+
+A level-by-level listing of the nodes: 
+The contents of the node with index 3:
+   Index   0  >  child: 1   item: Name: Don Id: 35 
+   Index   1  >  child: 4   item: Name: Billy Id: 39 
+                 child: 2
+The contents of the node with index 1:
+   Index   0  >  child: None   item: Name: Willy Id: 12 
+                 child: None
+The contents of the node with index 4:
+   Index   0  >  child: None   item: Name: Joe Id: 38 
+                 child: None
+The contents of the node with index 2:
+   Index   0  >  child: None   item: Name: Susie Id: 48 
+                 child: None
+An inorder traversal of the BTree:
+Name: Willy Id: 12 
+Name: Don Id: 35 
+Name: Joe Id: 38 
+Name: Billy Id: 39 
+Name: Susie Id: 48 
+An inorder traversal of the BTree:
+Name: Willy Id: 12 
+Name: Joe Id: 38 
+Name: Billy Id: 39 
+Name: Susie Id: 48 
+ # run#3 -------------------------------
+  The degree of the BTree is 2.
+  The index of the root node is 9.
+The contents of the node with index 1:
+   Index   0  >  child: None   item: 5
+   Index   1  >  child: None   item: 7
+   Index   2  >  child: None   item: 8
+                 child: None
+The contents of the node with index 2:
+   Index   0  >  child: None   item: 22
+   Index   1  >  child: None   item: 24
+                 child: None
+The contents of the node with index 3:
+   Index   0  >  child: 1   item: 10
+   Index   1  >  child: 5   item: 20
+                 child: 2
+The contents of the node with index 4:
+   Index   0  >  child: None   item: 32
+   Index   1  >  child: None   item: 35
+   Index   2  >  child: None   item: 38
+                 child: None
+The contents of the node with index 5:
+   Index   0  >  child: None   item: 13
+   Index   1  >  child: None   item: 15
+   Index   2  >  child: None   item: 18
+                 child: None
+The contents of the node with index 6:
+   Index   0  >  child: None   item: 42
+   Index   1  >  child: None   item: 45
+   Index   2  >  child: None   item: 46
+                 child: None
+The contents of the node with index 7:
+   Index   0  >  child: None   item: 26
+   Index   1  >  child: None   item: 27
+                 child: None
+The contents of the node with index 8:
+   Index   0  >  child: 7   item: 30
+   Index   1  >  child: 4   item: 40
+                 child: 6
+The contents of the node with index 9:
+   Index   0  >  child: 3   item: 25
+                 child: 8
+
+ # run#4 -------------------------------
+  The degree of the BTree is 2.
+  The index of the root node is 3.
+The contents of the node with index 1:
+   Index   0  >  child: None   item: 5
+   Index   1  >  child: None   item: 7
+   Index   2  >  child: None   item: 8
+                 child: None
+The contents of the node with index 2:
+   Index   0  >  child: None   item: 22
+   Index   1  >  child: None   item: 24
+                 child: None
+The contents of the node with index 3:
+   Index   0  >  child: 1   item: 10
+   Index   1  >  child: 5   item: 20
+   Index   2  >  child: 2   item: 26
+   Index   3  >  child: 7   item: 42
+                 child: 6
+The contents of the node with index 5:
+   Index   0  >  child: None   item: 13
+   Index   1  >  child: None   item: 15
+   Index   2  >  child: None   item: 18
+                 child: None
+The contents of the node with index 6:
+   Index   0  >  child: None   item: 45
+   Index   1  >  child: None   item: 46
+                 child: None
+The contents of the node with index 7:
+   Index   0  >  child: None   item: 27
+   Index   1  >  child: None   item: 30
+   Index   2  >  child: None   item: 32
+   Index   3  >  child: None   item: 40
+                 child: None
+
+ #run #5 -------------------------------
+  The degree of the BTree is 1.
+  The index of the root node is 3.
+The contents of the node with index 1:
+   Index   0  >  child: None   item: 27
+   Index   1  >  child: None   item: 29
+                 child: None
+The contents of the node with index 2:
+   Index   0  >  child: None   item: 50
+   Index   1  >  child: None   item: 73
+                 child: None
+The contents of the node with index 3:
+   Index   0  >  child: 1   item: 35
+   Index   1  >  child: 2   item: 98
+                 child: 4
+The contents of the node with index 4:
+   Index   0  >  child: None   item: 150
+   Index   1  >  child: None   item: 201
+                 child: None
+
+  The degree of the BTree is 1.
+  The index of the root node is 1.
+The contents of the node with index 1:
+   Index   0  >  child: None   item: 27
+   Index   1  >  child: None   item: 201
+                 child: None
+
+'''

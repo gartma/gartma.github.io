@@ -1,0 +1,54 @@
+.section .data
+
+x:
+  .long 13
+
+.section .text
+
+.globl _start
+
+_start:
+
+pushl x
+
+call prime
+
+addl $4, %esp
+
+movl %eax, %ebx
+movl $1, %eax
+int $0x080
+
+prime:
+
+pushl %ebp
+movl %esp, %ebp
+
+movl 8(%ebp), %ebx
+movl $2, %esi
+
+beginloop:
+
+cmpl %esi, %ebx
+je isPrime
+movl %ebx, %eax
+cdq
+idivl %esi
+cmpl $0, %edx
+je notPrime
+incl %esi
+jmp beginloop
+
+isPrime:
+
+movl $1, %eax
+movl %ebp, %esp
+popl %ebp
+ret
+
+notPrime:
+
+movl $0, %eax
+movl %ebp, %esp
+popl %ebp
+ret

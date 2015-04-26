@@ -1,0 +1,72 @@
+public class WaitandNotify {
+
+	public static void main(String[] args) {
+		Synch synch = new Synch();
+		Thread timer = new Thread(new TimerRunnable(synch));
+		timer.start();
+	}
+
+}
+
+class Synch{
+
+	synchronized void hold(){
+		try {
+			wait();
+		}
+		catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+
+	synchronized void release(){
+		notifyAll();
+	}
+}
+
+class TestRunnable implements Runnable {
+	
+	int id;
+	Synch synch;
+
+	TestRunnable(int identity,Synch s){
+		synch = s;
+		id = identity;
+	}
+
+	public void run() {
+		System.out.println("Thread "+id+" started.");
+		synch.hold();
+		System.out.println("Thread "+id+" running again.");
+	}
+
+}
+
+class TimerRunnable implements Runnable {
+
+	Synch synch;
+
+	TimerRunnable(Synch s){
+		synch = s;
+	}
+
+	public void run() {
+		Thread thread0 = new Thread(new TestRunnable(0,synch));
+		thread0.start();
+		Thread thread1 = new Thread(new TestRunnable(1,synch));
+		thread1.start();
+		Thread thread2 = new Thread(new TestRunnable(2,synch));
+		thread2.start();
+		Thread thread3 = new Thread(new TestRunnable(3,synch));
+		thread3.start();
+		Thread thread4 = new Thread(new TestRunnable(4,synch));
+		thread4.start();
+		try {
+			Thread.sleep(5000);
+		}
+		catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		synch.release();
+	}
+}

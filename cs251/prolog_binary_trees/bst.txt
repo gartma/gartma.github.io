@@ -1,0 +1,22 @@
+lookup(X,btnode(X,_,_)).
+lookup(X,btnode(Val,Left,_)) :- X < Val, lookup(X,Left).
+lookup(X,btnode(Val,_,Right)) :- X > Val, lookup(X,Right).
+
+processlist([],T,T).
+processlist([H|T],Tree,NewTree) :- insert(H,Tree,HTree), processlist(T,HTree,NewTree).
+
+insert(Val,nil,btnode(Val,nil,nil)).
+insert(Val,btnode(X,Left,Right),btnode(X,Left,NewTree)) :- Val > X, insert(Val,Right,NewTree).
+insert(Val,btnode(X,Left,Right),btnode(X,NewTree,Right)) :- Val < X, insert(Val,Left,NewTree).
+
+delFromTree(Val,btnode(Val,nil,Right),Right).
+delFromTree(Val,btnode(Val,Left,nil),Left).
+delFromTree(Val,btnode(NVal,nil,nil),btnode(NVal,nil,nil)) :- Val \= NVal.
+delFromTree(Val,btnode(NVal,Left,Right),btnode(NVal,Left,DRight)) :- Val > NVal, delFromTree(Val,Right,DRight).
+delFromTree(Val,btnode(NVal,Left,Right),btnode(NVal,DLeft,Right)) :- Val < NVal, delFromTree(Val,Left,DLeft).
+delFromTree(Val,btnode(Val,Left,Right),btnode(NewVal,Left,DRight)) :- getLeftMost(Right,NewVal), delFromTree(NewVal,Right,DRight).
+
+getLeftMost(btnode(Val,nil,_),Val).
+getLeftMost(btnode(_,Left,_),NVal) :- getLeftMost(Left,NVal).
+
+buildtree(T) :- readln(L,_,_,_,lowercase), processlist(L,nil,T).

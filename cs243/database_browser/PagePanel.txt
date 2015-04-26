@@ -1,0 +1,78 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+package databasebrowser;
+
+import java.sql.SQLException;
+import javax.swing.JPanel;
+import javax.swing.JButton;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
+
+/**
+ *
+ * @author mackenziegartner
+ */
+class PagePanel extends JPanel {
+    
+    private BrowserFrame browserframe;
+    private JButton nextButton = new JButton("Next");
+    private JButton previousButton = new JButton("Previous");
+    private ActionListener nextButtonListener = new NextButtonListener();
+    private ActionListener previousButtonListener = 
+            new PreviousButtonListener();
+
+    public PagePanel(BrowserFrame aFrame) {
+        super();
+
+        browserframe = aFrame;
+
+        //this.setLayout(new BorderLayout());
+
+        nextButton.addActionListener(nextButtonListener);
+        this.add(nextButton);
+
+        previousButton.addActionListener(previousButtonListener);
+        this.add(previousButton);
+    }
+
+    private class NextButtonListener implements ActionListener {
+        public NextButtonListener() {}
+
+        public void actionPerformed(ActionEvent e) {
+            if (browserframe.getCurrentQuery() == null) {
+                return;
+            }
+            try {
+                if (!browserframe.getRS().isAfterLast()) {
+                    browserframe.setTablePage(browserframe.getTablePage() + 1);
+                    browserframe.updateGuiTable(browserframe.getCurrentQuery());
+                }
+            }
+            catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    private class PreviousButtonListener implements ActionListener {
+        public PreviousButtonListener() {}
+
+        public void actionPerformed(ActionEvent e) {
+            if (browserframe.getCurrentQuery() == null) {
+                return;
+            }
+            if (browserframe.getTablePage() < 1) {
+                browserframe.setTablePage(0);
+                browserframe.updateGuiTable(browserframe.getCurrentQuery());
+            }
+            else {
+                browserframe.setTablePage(browserframe.getTablePage() - 1);
+                browserframe.updateGuiTable(browserframe.getCurrentQuery());
+            }
+        }
+    }
+
+}

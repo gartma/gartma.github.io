@@ -1,0 +1,61 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+package databasebrowser;
+
+import javax.swing.JPanel;
+import javax.swing.JButton;
+import javax.swing.JTextField;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
+
+/**
+ *
+ * @author mackenziegartner
+ */
+class QueryPanel extends JPanel {
+    
+    private BrowserFrame browserframe;
+    private JButton queryButton = new JButton("Run Query");
+    private JTextField queryField = new JTextField("Enter your query here", 63);
+    private ActionListener queryFieldListener = new QueryFieldListener();
+    private ActionListener queryButtonListener = new QueryButtonListener();
+
+    public QueryPanel(BrowserFrame aframe) {
+        super();
+
+        browserframe = aframe;
+
+        queryField.addActionListener(queryFieldListener);
+        this.add(queryField);
+
+        queryButton.addActionListener(queryButtonListener);
+        this.add(queryButton);
+
+    }
+
+    private class QueryButtonListener implements ActionListener {
+
+        public QueryButtonListener () {}
+
+        public void actionPerformed(ActionEvent event) {
+            String query = queryField.getText();
+            queryField.selectAll();
+            browserframe.updateGuiTable(query);
+        }
+    }
+
+    private class QueryFieldListener implements ActionListener {
+
+        public QueryFieldListener () {}
+
+        public void actionPerformed(ActionEvent event) {
+            String query = queryField.getText();
+            queryField.selectAll();
+            browserframe.updateGuiTable(query);
+        }
+    }
+
+}
