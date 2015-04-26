@@ -1,0 +1,220 @@
+import java.net.*;
+import java.io.*;
+import java.util.*;
+import java.text.*;
+
+public class ClientThread extends Thread
+{
+    private Socket client;
+    private InputStream in;
+    private BufferedReader bin;
+    //private PrintWriter prout;
+    private String PATH;
+    private DataOutputStream pout;
+
+    public ClientThread(Socket cl, String P) {
+        super();
+        //System.out.println("|||||||||||||||||THREAD CREATED|||||||||||||||||\n");
+        client = cl;
+        PATH = P;
+        try {
+
+            // Create input stream to handle input from the client
+            in = client.getInputStream();
+            bin = new BufferedReader(new InputStreamReader(in));
+
+            // OutputStream to send output to the client
+            // either PrintWriter OR DataOutputStream will work
+            // HOWEVER; DataOutputStream is used in order to properly
+            // transfer an image file
+            //pout = new PrintWriter(client.getOutputStream(), true);
+            pout = new DataOutputStream(client.getOutputStream());
+
+        } catch (IOException ioe) {
+            System.err.println(ioe);
+        }
+    }
+
+    public void run() {
+
+        try {
+            String httpRequest = bin.readLine();
+
+            if (!httpRequest.equals(null) || !httpRequest.isEmpty()) {
+                // Parsing the first line sent by the client
+                String[] httpParse = httpRequest.split(" ");
+                String verb = httpParse[0];
+                String filepath = httpParse[1];
+                String protocol = httpParse[2];
+
+                // Parsing the rest of the message sent by the client (headers)
+                //System.out.println("-----------------PRINTING THE REQUEST-----------------\n");
+                //System.out.println(httpRequest);
+                boolean badagent = false;
+                String line = bin.readLine();
+                while (!line.equals("")) {
+                    //System.out.println(line);
+                    if (line.contains("Chromium"))
+                        badagent = true;
+                    line = bin.readLine();
+                }
+
+                // Recording the date when the connection was established for the response
+                Calendar cal = Calendar.getInstance();
+                SimpleDateFormat simpleFormat = new SimpleDateFormat("yyyy/MM/dd.HH:mm:ss.z");
+                String date = "Date: "+simpleFormat.format(cal.getTime())+"\r\n";
+
+                // Creating a file object with the filepath from the client
+                File requestFile;
+                if (filepath.equals("/"))
+                    requestFile = new File(PATH + filepath + "index.html");
+                else
+                    requestFile = new File(PATH + filepath);
+
+                String resp = "";
+                String body = "";
+
+                // Check to see if the file exists (200)
+                // otherwise respond appropriately (404)
+                if (requestFile.exists()) {
+                    // Requested file exists! Begin building the response!
+                    resp += "HTTP/1.1 200 OK\r\n";
+
+                    // Determining the content-type and adding it to the response
+                    String[] fileInfo = requestFile.getName().split("\\.");
+                    String fileExt = fileInfo[fileInfo.length - 1];
+                    String fileName = "";
+                    for (String file : fileInfo) {
+                        if (!file.equals(fileExt))
+                            fileName += file;
+                    }
+                    System.out.println(fileName);
+                    String contentType;
+                    boolean isImage = false;
+                    if (fileExt.equals("html")) {
+                        contentType = "Content-Type: text/";
+                        //Scanner scan = new Scanner(requestFile);
+                        //byte[] htmlText = new byte[requestFile.length()];
+                        //int pos = 0;
+                        //while (scan.hasNextByte())
+                        //    htmlText[pos] = scan.nextByte();
+                        //    pos += 1;
+                        //scan.close();
+                    } else {
+                        if (fileExt.equals("png") || fileExt.equals("jpg") || fileExt.equals("gif") || fileExt.equals("ico")) {
+                            contentType = "Content-Type: image/";
+                            isImage = true;
+                        } else {
+                            if (fileExt.equals("java")) {
+                                contentType = "Content-Type: text/html";
+                                String[] command = {"java", fileName};
+                                Process p = Runtime.getRuntime().exec(command);
+                                InputStream is = p.getInputStream();
+                                BufferedReader pread = new BufferedReader(new InputStreamReader(is));
+                                String pline = pread.readLine();
+                                while (!pline.equals(""))
+                                    body += line;
+                            } else {
+                                contentType = "Content-Type: text/";
+                                Scanner scan = new Scanner(requestFile);
+                                while (scan.hasNextLine())
+                                    body += scan.nextLine();
+                                scan.close();
+                            }
+                        }
+                    }
+                    resp += contentType + fileExt + "\r\n";
+
+                    // Adding the date to the response (Date was previously allocated)
+                    resp += date;
+
+                    // Getting the length of the file and adding it to the response
+                    String contentLength = "Content-Length: "+ (requestFile.length());
+                    resp += contentLength + "\r\n";
+
+                    // Required blank line before the message body
+                    resp += "\r\n";
+
+                    // Well this was unexpected...
+                    // If pout.writeBytes(resp); is called from a chromium browser
+                    // the webpage will not properly display, but if it is called
+                    // from any other browser it will properly display...
+                    if (!badagent)
+                        pout.writeBytes(resp);
+                    // How do I send the header information to a Chromium browser?
+
+                    // If the file is an image parse the file accordingly
+                    if (isImage) {
+
+                        FileInputStream scan = new FileInputStream(requestFile);
+                        // A buffer that can hold 1 kb
+                        byte[] image = new byte[1024];
+
+                        // scan.read(image) fills the buffer
+                        int readData = scan.read(image);
+                        while (readData != -1) {
+                            // Write the contents of the buffer to the OutputStream
+                            pout.write(image, 0, readData);
+                            readData = scan.read(image);
+                        }
+
+                        scan.close();
+                    } else {
+                        //resp += body;
+                        FileInputStream scan = new FileInputStream(requestFile);
+                        // A buffer that can hold 1 kb
+                        byte[] image = new byte[1024];
+
+                        // scan.read(image) fills the buffer
+                        int readData = scan.read(image);
+                        while (readData != -1) {
+                            // Write the contents of the buffer to the OutputStream
+                            pout.write(image, 0, readData);
+                            readData = scan.read(image);
+                        }
+                        //pout.println(body); //PrintWriter output
+                        //pout.writeBytes(body); //DataOutputStream output
+                    }
+
+                } else {
+                    // Requested file does not exist!
+                    resp += "HTTP/1.1 404 Not Found\r\n";
+                    resp += "Content-Type: text/html\r\n";
+                    resp += date;
+                    body = "<html><head></head><body><h1>404 Not Found</h1></body></html>";
+                    resp += "Content-Length: "+body.length()+"\r\n";
+                    resp += "\r\n";
+                    resp += body;
+
+                    // Using either PrintWriter or DataOutputStream to send response
+                    //pout.println(resp); //PrintWriter output
+                    pout.writeBytes(resp); //DataOutputStream output
+                }
+
+                //System.out.println("\n-----------------PRINTING THE RESPONSE-----------------\n");
+                //System.out.println(resp + "\n");
+            } else {
+                System.out.println("Invalid request");
+                pout.writeBytes("Invalid request");
+            }
+            // Closing the streams and sockets
+            pout.close();
+            client.close();
+            //System.out.println("|||||||||||||||||THREAD CLOSED|||||||||||||||||\n");
+
+        } catch (FileNotFoundException fnfe) {
+            fnfe.printStackTrace();
+            System.out.println("Not quite sure how I got here...");
+        } catch (SocketException se) {
+            se.printStackTrace();
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        } catch (NullPointerException npe) {
+            npe.printStackTrace();
+        }
+    }
+
+    //private void clientGet() {
+
+    //}
+}

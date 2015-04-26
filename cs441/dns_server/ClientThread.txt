@@ -1,0 +1,86 @@
+import java.net.*;
+import java.io.*;
+
+public class ClientThread extends Thread
+{
+    private Socket client;
+    private InputStream in;
+    private BufferedReader bin;
+    private PrintWriter pout;
+
+    public ClientThread(Socket cl) {
+        super();
+        System.out.println("A thread was created.");
+        client = cl;
+        try {
+            // create input stream to handle input
+            // from the client
+            in = client.getInputStream();
+            bin = new BufferedReader(new InputStreamReader(in));
+            // printer to send output to the client
+            pout = new PrintWriter(client.getOutputStream(), true);
+        } catch (IOException ioe) {
+            System.err.println(ioe);
+        }
+    }
+
+    public void run() {
+
+        /*
+        // create input stream to handle input
+        // from the client
+        InputStream in = client.getInputStream();
+        BufferedReader bin = new BufferedReader(new InputStreamReader(in));
+        // printer to send output to the client
+        PrintWriter pout = new PrintWriter(client.getOutputStream(), true);
+        */
+
+        String line = "";
+        boolean flagged = false;
+
+        try {
+            String httpRequest = bin.readLine();
+            //System.out.println(httpRequest);
+
+            // Parsing the first line sent by the client
+            String[] httpParse = httpRequest.split(" ");
+            String verb = httpParse[0];
+            String filepath = httpParse[1];
+            String protocol = httpParse[2];
+
+            File requestFile = new File(filepath);
+            if (file.exists) {
+                System.out.println("Success!");
+            }
+
+            //pout.println(method);
+            //pout.println(filepath);
+            //pout.println(protocol);
+        } catch (IOException ioe) {
+            System.err.println(ioe);
+        }
+
+        while (!flagged) {
+            try {
+                line = bin.readLine();
+                //System.out.println(line);
+            } catch (IOException ioe) {
+                System.err.println(ioe);
+            }
+            if (line.equals(""))
+                flagged = true;
+            if (!flagged) {
+                //System.out.println(line);
+                pout.println(line);
+            }
+        }
+
+        try {
+            // close the socket connection
+            client.close();
+        } catch (IOException ioe) {
+            System.err.println(ioe);
+        }
+        System.out.println("A thread is done listening.");
+    }
+}

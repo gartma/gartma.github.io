@@ -1,0 +1,85 @@
+#!/usr/local/bin/python2.7
+
+import os
+import urllib
+import httplib
+import ssl
+
+print "Content-type: text/html\n"
+
+#Parsing the QUERY_STRING to retrieve authorization code and
+#parameters passed under the state variable through google
+query = os.environ.get('QUERY_STRING')
+if query != "":
+    query = query.split("&")
+    index = 0
+    for element in query:
+        query[index] = element.split("=")
+        index += 1
+    for element in query:
+        if element[0] == "code":
+            code = element[1]
+        if element[0] == "state":
+            state = element[1]
+
+#Opening a connection to send the authorization code and retrieve an access token
+httpsConn = httplib.HTTPSConnection("accounts.google.com")
+params = urllib.urlencode({"code": code, "client_id": "746017258751.apps.googleusercontent.com", "client_secret": "YaCV74OItALWlW9UJe0Io1dd", "redirect_uri": "http://webpages.charter.net/mgartner/qrreader.cgi", "grant_type": "authorization_code"})
+headers = {"Content-Type": "application/x-www-form-urlencoded"}
+httpsConn.request("POST", "/o/oauth2/token", params, headers)
+resp = httpsConn.getresponse()
+authInfo = resp.read()
+accessToken = eval(authInfo)["access_token"]
+httpsConn.close()
+
+#Opening a connection to send an access token and retrieve the user email
+httpsConn = httplib.HTTPSConnection("www.googleapis.com")
+theUrl = "/oauth2/v1/userinfo?access_token="+accessToken
+httpsConn.request("GET", theUrl)
+resp = httpsConn.getresponse()
+userInfo = resp.read()
+#Google broke our code! Dictionary value returns lowercase 't' for true, which cannot be interpreted by python
+true = True
+email = eval(userInfo)["email"]
+httpsConn.close()
+
+#Parsing the data passed through the state variable
+userData = urllib.unquote_plus(state).split("&")
+userDay = userData[0].split("=")[1]
+userMonth = userData[1].split("=")[1]
+userYear = userData[2].split("=")[1]
+userTitle = userData[3].split("=")[1]
+userLocation = userData[4].split("=")[1]
+userTime = userData[5].split("=")[1]
+userDesc = userData[6].split("=")[1]
+
+#Preparing variables for upcoming connection object
+API_KEY = "AIzaSyAjLlojB2MhrpYErkDZ6uq9xy03ab28Un0"
+USER = urllib.quote(email)
+myStart = userYear + "-" + userMonth + "-" + userDay + "T" + userTime + ":00.00-05:00"
+timeSplit = userTime.split(":")
+plusOne = str(int(timeSplit[0])+1) + ":" + timeSplit[1]
+myEnd = userYear + "-" + userMonth + "-" + userDay + "T" + plusOne + ":00.00-05:00"
+
+#Creating a connection to insert an event into the users google calendar
+theUrl = "/calendar/v3/calendars/" + USER + "/events?pp=1&key=" + API_KEY
+httpsConnect = httplib.HTTPSConnection("www.googleapis.com")
+params = { "start": {  "dateTime": myStart }, "end": {  "dateTime": myEnd }, "description": userDesc, "summary": userTitle, "location": userLocation}
+headers = {"Content-Type": "application/json", "Authorization": "OAuth "+accessToken}
+httpsConnect.request("POST", theUrl, str(params), headers)
+eventInfo = httpsConnect.getresponse()
+
+print '''
+<html>
+<head>
+</head>
+<body>
+    <p>Event successfully added!</p></br>
+    Link to google calendar: <a href="http://www.google.com/calendar">www.google.com/calendar</a>
+</body>
+</html>
+'''
+
+
+
+

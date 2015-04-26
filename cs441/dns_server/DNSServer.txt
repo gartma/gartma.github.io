@@ -1,0 +1,25 @@
+import java.net.*;
+import java.io.*;
+
+public class DNSServer
+{
+    public static void main(String[] args) {
+        try {
+            ServerSocket sock = new ServerSocket(9782);
+
+            System.out.println("...DNS Reverse-Lookup Server Active...");
+
+            // now listen for connections
+            System.out.println("Listening for connections...");
+            while (true) {
+                Socket client = sock.accept();
+
+                ClientThread c = new ClientThread(client);
+                c.start();
+            }
+        }
+        catch (IOException ioe) {
+            System.err.println(ioe);
+        }
+    }
+}

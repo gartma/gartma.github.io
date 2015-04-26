@@ -1,0 +1,47 @@
+import java.net.*;
+import java.io.*;
+import java.util.*;
+
+public class Client
+{
+    public static void main(String[] args) {
+        try {
+            // make connection to server socket
+            Socket sock = new Socket("127.0.0.1", 9782);
+
+            // create input stream to handle input
+            // from the server
+            InputStream in = sock.getInputStream();
+            BufferedReader bin = new BufferedReader(new InputStreamReader(in));
+
+            // printer to send output to server
+            PrintWriter pout = new PrintWriter(sock.getOutputStream(), true);
+
+            // scanner to read from the prompt
+            Scanner scan = new Scanner(System.in);
+
+            String scanline = "";
+            String line;
+            boolean flag = false;
+
+            System.out.println("-----------------DNS Reverse Lookup Service-----------------");
+            System.out.println("Type your favorite website and press enter to find its IP address!");
+            System.out.println("If you're tired of this, type 'exit' to close the session");
+
+            while (!flag) {
+                scanline = scan.nextLine();
+                if (scanline.equals("exit"))
+                    flag = true;
+                pout.println(scanline);
+                if (!flag)
+                    System.out.println(bin.readLine());
+            }
+
+            // close the socket connection
+            sock.close();
+        }
+        catch (IOException ioe) {
+            System.err.println(ioe);
+        }
+    }
+}

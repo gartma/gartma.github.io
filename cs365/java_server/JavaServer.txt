@@ -1,0 +1,28 @@
+import java.net.*;
+import java.io.*;
+
+public class JavaServer
+{
+
+    private static final String PATH = "/home/students/gartma01/public_html/JavaServer";
+
+    public static void main(String[] args) {
+        try {
+            ServerSocket sock = new ServerSocket(9782);
+
+            System.out.println("...JavaServer Active...");
+
+            // now listen for connections
+            System.out.println("Listening for connections...\n");
+            while (true) {
+                Socket client = sock.accept();
+
+                ClientThread c = new ClientThread(client, PATH);
+                c.start();
+            }
+        }
+        catch (IOException ioe) {
+            System.err.println(ioe);
+        }
+    }
+}

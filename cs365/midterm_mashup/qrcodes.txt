@@ -1,0 +1,28 @@
+
+generate = function () {
+
+    var day = document.getElementById("day").value
+    var month = document.getElementById("month").value
+    var year = document.getElementById("year").value
+    var title = document.getElementById("title").value
+    var location = document.getElementById("location").value
+    var time = document.getElementById("time").value
+    var description = document.getElementById("description").value
+
+    var calInfo = "day="+day+"&month="+month+"&year="+year+"&title="+title+"&location="+location+"&time="+time+"&description="+description
+    calInfo = encodeURIComponent(calInfo)
+    var scope = "scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email+https%3A%2F%2Fwww.googleapis.com%2Fauth/calendar&"
+    var state = "state="+calInfo+"&"
+    var redirect_uri = "redirect_uri=http%3A%2F%2Fwebpages.charter.net%2Fmgartner%2Fqrreader.cgi&"
+    var response_type = "response_type=code&"
+    var client_id = "client_id=746017258751.apps.googleusercontent.com"
+    var urltext = "https://accounts.google.com/o/oauth2/auth?"+scope+state+redirect_uri+response_type+client_id
+
+    var urlcode = "https://chart.googleapis.com/chart?chs=250x250&cht=qr&chl="+encodeURIComponent(urltext)//+"&chof=validate"
+
+    var qrimg = document.createElement("img")
+    qrimg.src = urlcode		        
+    var imgdiv = document.getElementById("imgdiv")
+    imgdiv.appendChild(qrimg)
+
+}

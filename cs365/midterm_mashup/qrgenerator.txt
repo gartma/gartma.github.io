@@ -1,0 +1,20 @@
+<html>
+<head>
+    <script type="text/javascript" src="qrcodes.js"></script>
+    <link rel="stylesheet" type="text/css" href="main.css"/>
+    <title>Midterm Mashup</title><br/>
+</head>
+<body>
+    <h2>Midterm Mashup: QR Codes and Google Calendar Events!</h2>
+    Month (Two digits): <input id="month" type="text" maxlength="2" size="2" value="xx" />
+    Day (Two digits): <input id="day" type="text" maxlength="2" size="2" value="xx" />
+    Year (Four digits): <input id="year" type="text" maxlength="4" size="4" value="xxxx" /></br>
+    Time (Military time): <input id="time" type="text" maxlength="5" size="5" value="00:00" />
+    Location: <input id="location" type="text" /></br>
+    Title: <input id="title" type="text" /></br>
+    <div>Description: <textarea id="description" cols="50" rows="4"></textarea></br></div>
+    <button onclick="generate()">Generate QR</button>
+    <div id="imgdiv">
+    </div>
+</body>
+</html>
