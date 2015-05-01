@@ -1,70 +1,42 @@
-<html>
-	
+<!DOCTYPE html>
+<html lang="en" ng-app="gartma">
 <head>
-
-		<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE"/>
-		
-
-<link rel="stylesheet" type="text/css" href="main.css"/>
-		
-<script type="text/javascript" src="replaceContent.js"></script>
-	
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Placed at the end of the document so the pages load faster -->
+  <script src="bower_components/jquery/dist/jquery.min.js"></script>
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
+  <!-- Latest compiled and minified JavaScript -->
+  <script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+  <script src="bower_components/angular/angular.js"></script>
+  <script src="bower_components/angular-route/angular-route.js"></script>
+  <script src="app.js"></script>
 </head>
-	
 <body>
-		
-<div id="header">
+  <nav class="navbar navbar-inverse">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="#">gartma.github.io</a>
+      </div>
+      <div class="collapse navbar-collapse" id="myNavbar">
+        <ul class="nav navbar-nav">
+          <li class="active"><a href="#/home">Home</a></li>
+          <li><a href="#/portfolio">Portfolio</a></li>
+          <li><a href="#/repositories">Repositories</a></li>
+          <li><a href="GeneralResume.pdf">Resume</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
 
-			<h1>Max Gartner</h1>
-		
+  <div ng-view></div>
 
-</div>
-		
-
-<div id="sidebar">
-			<div id="links">
-				
-<ul>
-					
-<li><a href="javascript:replaceContent('home.html', 'content')"><strong>Home</strong></a></li>
-					
-<li><a href="javascript:replaceContent('organ.html', 'content')" />Organ</a></li>
-					
-<li><a href="javascript:replaceContent('schedule.html', 'content')">Schedule</a></li>
-<hr/>
-					
-<li><a href="https://bitbucket.org/gartma01" target="_blank">Bitbucket Repository</a></li>
-					
-<li><a href="javascript:replaceContent('portfolio.html', 'content')">Portfolio</a></li>
-<hr/>
-					
-<li><a href="http://gartma.github.io/GeneralResume.pdf" target="_blank">Resume</a></li>
-
-				</ul>
-		
-	</div>
-		
-</div>
-		
-
-
-<div id="content">
-			
-
-<h3>Welcome to my website!</h3>
-
-
-
-		</div>
-		
-
-<div id="footer">
-
-			<h4>Graduate from Luther College</h4>
-		
-</div>
-	
-
-</body>
-
-</html>
+  </body>
+  </html>
