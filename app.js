@@ -16,7 +16,7 @@ app.config(function($routeProvider, $locationProvider){
       templateUrl: '\\views\\home.html'
     })
     .when('/portfolio', {
-      templateUrl: 'portfolio.html'
+      templateUrl: '\\views\\portfolio.html'
     })
     .when('/repositories', {
       templateUrl: 'repositories.html'
