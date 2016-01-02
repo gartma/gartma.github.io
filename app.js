@@ -2,6 +2,33 @@
 
 var app = angular.module('gartma', ['ngRoute']);
 
+app.controller('portfolioController', ['$scope', '$http', function($scope, $http){
+  $http.get("..\\content\\coursework.json")
+  .success(function(data, status, headers, config)
+  {
+    $scope.courses = data;
+  })
+  .error(function(data, status, headers, config){
+    
+  });
+  
+  function getUrl(course, file)
+  {
+    var baseUrl = '..\\content\\';
+    return this.baseUrl.concat(course, file, '.txt');
+  }
+
+  this.GetFile = function(course, file){
+  $http.get(getUrl(course, file))
+  .success(function(data, status, headers, config)
+  {
+    alert("Success");
+  })
+  .error(function(data, status, headers, config)
+  {
+  })
+  };
+}]);
 
 app.directive('navBar', function(){
   return {

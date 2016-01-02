@@ -1,0 +1,195 @@
+[
+	{
+		"title": "Software Design and Development",
+		"number": "cs200",
+		"assignments": [
+			{
+				"name" : "MP3 Player",
+				"files" : []
+			}
+		]
+	},
+	{
+		"title": "Computer Architecture",
+		"number": "cs241",
+		"assignments": [
+			{
+				"name" : "Linux Assembly Language",
+				"files" : [
+					"allPrime.txt",
+					"inputfactorial.txt",
+					"isPrime.txt",
+					"selectionsort.txt"
+				]
+			}
+		]
+	},
+	{
+		"title": "Database Management Systems",
+		"number": "cs243",
+		"assignments": [
+			{
+				"name" : "Caching Policies",
+				"files" : [
+					"BasicBufferMgr(Clock).txt",
+					"BasicBufferMgr(NRU).txt",
+					"Buffer.txt"
+				]
+			},
+			{
+				"name" : "Database Browser",
+				"files" : [
+					"BrowserFrame.txt",
+					"Main.txt",
+					"PagePanel.txt",
+					"QueryPanel.txt"
+				]
+			},
+			{
+				"name" : "Java Thread Introduction",
+				"files" : [
+					"WaitAndNotify.txt"
+				]
+			},
+			{
+				"name" : "Quiescent Checkpointing",
+				"files" : [
+					"QCPUnitTest1.txt",
+					"QCPUnitTest2.txt",
+					"Transaction.txt"
+				]
+			},
+			{
+				"name" : "Transaction Management",
+				"files" : [
+					"TransactionManagement.txt"
+				]
+			}
+		]
+	},
+	{
+		"title": "Programming Languages",
+		"number": "cs251",
+		"assignments": [
+			{
+				"name" : "C++ Calculator",
+				"files" : [
+					"astC.txt",
+					"asth.txt",
+					"calcC.txt",
+					"calch.txt",
+					"calculatorC.txt",
+					"calculatorh.txt"
+				]
+			},
+			{
+				"name" : "ML Calculator",
+				"files" : [
+					"calc.txt",
+					"calcast.txt"
+				]
+			},
+			{
+				"name" : "Prolog Binary Trees",
+				"files" : [
+					"bst.txt"
+				]
+			},
+			{
+				"name" : "Prolog Calculator",
+				"files" : [
+					"calc.txt"
+				]
+			},
+			{
+				"name" : "Ruby Calculator",
+				"files" : [
+					"calccomp.txt"
+				]
+			}
+		]
+	},
+	{
+		"title": "Advanced Data Structures and Algorithms",
+		"number": "cs351",
+		"assignments": [
+			{
+				"name" : "BTree",
+				"files" : [
+					"btree.txt",
+					"btreenode.txt"
+				]
+			},
+			{
+				"name" : "Cichellis' Algorithm",
+				"files" : [
+					"cichelli.txt"
+				]
+			},
+			{
+				"name" : "Splay Tree",
+				"files" : [
+					"splaynode.txt",
+					"splaytree.txt"
+				]
+			}
+		]
+	},
+	{
+		"title": "Internet Programming",
+		"number": "cs365",
+		"assignments": [
+			{
+				"name" : "Java Server",
+				"files" : [
+					"ClientThread.txt",
+					"JavaServer.txt"
+				]
+			},
+			{
+				"name" : "Javascript Graphics",
+				"files" : [
+					"doodleboard.txt",
+					"doodleboardcss.txt",
+					"simplegraphics.txt"
+				]
+			},
+			{
+				"name" : "Midterm Mashup",
+				"files" : [
+					"qrcodes.txt",
+					"qrgenerator.txt",
+					"qrreader.txt"
+				]
+			},
+			{
+				"name" : "Web2Py Server",
+				"files" : []
+			}
+		]
+	},
+	{
+		"title": "Operating Systems",
+		"number": "cs441",
+		"assignments": [
+			{
+				"name" : "Dekkers' Algorithm",
+				"files" : [
+					"Account.txt",
+					"AccountDemo.txt",
+					"Customer.txt",
+					"Dekker.txt",
+					"Synchronizer.txt"
+				]
+			},
+			{
+				"name" : "DNS Server",
+				"files" : [
+					"Client.txt",
+					"ClientThread.txt",
+					"DNSServer.txt"
+				]
+			}
+		]
+	}
+]

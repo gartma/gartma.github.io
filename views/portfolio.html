@@ -1,86 +1,17 @@
 <h2>Coursework</h2>
 
-<ul class="nav nav-pills nav-justified">
-  <li class="dropdown">
-    <a class="dropdown-toggle" data-toggle="dropdown">CS 200
+<ul class="nav nav-pills nav-justified" ng-controller="portfolioController as portfolio">
+  <li ng-repeat="course in courses" class="dropdown">
+    <a class="dropdown-toggle" data-toggle="dropdown">{{ course.number }}
       <span class="caret"></span>
     </a>
     <ul class="dropdown-menu">
-      <li><a>MP3 Player</a></li>
+      <li ng-repeat="assignment in course.assignments">
+        <a>{{ assignment.name }}</a>
+      </li>
     </ul>
   </li>
-  <li class="dropdown">
-    <a class="dropdown-toggle" data-toggle="dropdown">CS 200
-      <span class="caret"></span>
-    </a>
-    <ul class="dropdown-menu">
-      <li><a>MP3 Player</a></li>
-    </ul>
-  </li>
-  <li class="dropdown">
-    <a class="dropdown-toggle" data-toggle="dropdown">CS 241
-      <span class="caret"></span>
-    </a>
-    <ul class="dropdown-menu">
-      <li><a>Linux Assembly Language</a></li>
-    </ul>
-  </li>
-  <li class="dropdown">
-    <a class="dropdown-toggle" data-toggle="dropdown">CS 243
-      <span class="caret"></span>
-    </a>
-    <ul class="dropdown-menu">
-      <li><a>Caching Policies</a></li>
-      <li><a>Database Browser</a></li>
-      <li><a>Java Thread Introduction</a></li>
-      <li><a>Quiescent Checkpointing</a></li>
-      <li><a>Transaction Management</a></li>
-    </ul>
-  </li>
-  <li class="dropdown">
-    <a class="dropdown-toggle" data-toggle="dropdown">CS 251
-      <span class="caret"></span>
-    </a>
-    <ul class="dropdown-menu">
-      <li><a>C++ Calculator</a></li>
-      <li><a>SML Calculator</a></li>
-      <li><a>Prolog Binary Trees</a></li>
-      <li><a>Prolog Calculator</a></li>
-      <li><a>Ruby Calculator</a></li>
-    </ul>
-  </li>
-  <li class="dropdown">
-    <a class="dropdown-toggle" data-toggle="dropdown">CS 351
-      <span class="caret"></span>
-    </a>
-    <ul class="dropdown-menu">
-      <li><a>BTree</a></li>
-      <li><a>Cichelli</a></li>
-      <li><a>Splay Tree</a></li>
-    </ul>
-  </li>
-  <li class="dropdown">
-    <a class="dropdown-toggle" data-toggle="dropdown">CS 365
-      <span class="caret"></span>
-    </a>
-    <ul class="dropdown-menu">
-      <li><a>Java Server</a></li>
-      <li><a>Javascript Graphics</a></li>
-      <li><a>Midterm Mashup</a></li>
-      <li><a>Web2py Server</a></li>
-    </ul>
-  </li>
-  <li class="dropdown">
-    <a class="dropdown-toggle" data-toggle="dropdown">CS 441
-      <span class="caret"></span>
-    </a>
-    <ul class="dropdown-menu">
-      <li><a>Dekker Algorithm</a></li>
-      <li><a>DNS Server</a></li>
-    </ul>
-  </li>
-</ul>
-
+ </ul>
 
 <ul class="nav nav-tabs">
   <li class="active"><a>calc</a></li>
