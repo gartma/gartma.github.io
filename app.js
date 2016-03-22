@@ -15,7 +15,7 @@ app.controller('portfolioController', ['$scope', '$http', function($scope, $http
   function getUrl(course, file)
   {
     var baseUrl = '..\\content\\';
-    return this.baseUrl.concat(course, file, '.txt');
+    return baseUrl.concat(course, "\\", file, '.txt');
   }
 
   this.GetFile = function(course, file){

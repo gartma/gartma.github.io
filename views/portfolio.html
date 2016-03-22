@@ -7,7 +7,7 @@
     </a>
     <ul class="dropdown-menu">
       <li ng-repeat="assignment in course.assignments">
-        <a>{{ assignment.name }}</a>
+        <a ng-click="portfolio.GetFile(course.number, assignment.name)">{{ assignment.name }}</a>
       </li>
     </ul>
   </li>
