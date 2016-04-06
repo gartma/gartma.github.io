@@ -9,9 +9,9 @@ app.controller('portfolioController', ['$scope', '$http', function($scope, $http
     $scope.courses = data;
   })
   .error(function(data, status, headers, config){
-    
+
   });
-  
+
   function getUrl(course, file)
   {
     var baseUrl = '..\\content\\';
@@ -46,7 +46,7 @@ app.config(function($routeProvider, $locationProvider){
       templateUrl: '\\views\\portfolio.html'
     })
     .when('/repositories', {
-      templateUrl: 'repositories.html'
+      templateUrl: '\\views\\repositories.html'
     })
     .otherwise({
       redirectTo: '/home'
